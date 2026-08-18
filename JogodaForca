@@ -1,0 +1,139 @@
+import { StyleSheet, View } from 'react-native';
+
+export default function Hangman() {
+  return (
+    <View style={styles.container}>
+      
+      {/* Área do Jogo onde o desenho vai acontecer */}
+      <View style={styles.gameArea}>
+        
+        {/* estrutura forca */}
+        <View style={styles.base} />
+        <View style={styles.pole} />
+        <View style={styles.topBar} />
+        <View style={styles.rope} />
+
+        {/* partes boneco*/}
+        <View style={styles.head} />
+        <View style={styles.body} />
+        
+        {/* braços pernas*/}
+        <View style={styles.leftArm} />
+        <View style={styles.rightArm} />
+        <View style={styles.leftLeg} />
+        <View style={styles.rightLeg} />
+
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF', 
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gameArea: {
+    width: 200,
+    height: 300,
+    
+  },
+  
+  /* estilo forca */
+  base: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    width: 100,
+    height: 10,
+    backgroundColor: '#000',
+  },
+  pole: {
+    position: 'absolute',
+    bottom: 0,
+    left: 45, // Centralizado em relação à base de 100
+    width: 10,
+    height: 250,
+    backgroundColor: '#000',
+  },
+  topBar: {
+    position: 'absolute',
+    bottom: 230, // Fica lá no topo do poste
+    left: 45,
+    width: 100,
+    height: 10,
+    backgroundColor: '#000',
+  },
+  rope: {
+    position: 'absolute',
+    bottom: 190, // Desce a partir da ponta da barra superior
+    left: 135,
+    width: 4,
+    height: 50,
+    backgroundColor: '#8B4513', // Marrom, cor de corda
+  },
+
+  /* estilo do boneco */
+  head: {
+    position: 'absolute',
+    bottom: 140, // Logo abaixo da corda
+    left: 112,   // Alinhado perfeitamente no centro da corda
+    width: 50,
+    height: 50,
+    borderRadius: 25, 
+    borderWidth: 4,
+    borderColor: '#000',
+  },
+  body: {
+    position: 'absolute',
+    bottom: 60, // Desce a partir da cabeça
+    left: 135,  // Alinhado com a corda
+    width: 4,
+    height: 80,
+    backgroundColor: '#000',
+  },
+  /*  BRAÇOS  */
+  leftArm: { //direito
+    position: 'absolute',
+    bottom: 110, // Altura no peito
+    left: 100,   // Posicionado à esquerda do corpo
+    width: 40,
+    height: 4,
+    backgroundColor: '#000',
+    // Gira a linha no sentido anti-horário para o braço cair para o lado
+    transform: [{ rotate: '-45deg' }], 
+  },
+  rightArm: { //esquerdo
+    position: 'absolute',
+    bottom: 110, 
+    left: 135,   // Posicionado à direita do corpo
+    width: 40,
+    height: 4,
+    backgroundColor: '#000',
+    // Gira no sentido horário
+    transform: [{ rotate: '45deg' }], 
+  },
+
+  /*  PERNAS */
+  leftLeg: { //direita
+    position: 'absolute',
+    bottom: 45,  // Fica na parte inferior do corpo
+    left: 100,
+    width: 40,
+    height: 4,
+    backgroundColor: '#000',
+    transform: [{ rotate: '-45deg' }],
+  },
+  rightLeg: { //esquerda
+    position: 'absolute',
+    bottom: 45,
+    left: 135,
+    width: 40,
+    height: 4,
+    backgroundColor: '#000',
+    transform: [{ rotate: '45deg' }],
+  },
+ },
+);
