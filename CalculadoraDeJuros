@@ -1,0 +1,144 @@
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
+
+export default function CalculadoraDeJuros() {
+  const [valorEmprestadoInput, setValorEmprestadoInput] = useState('');
+  const [taxaSelecionada, setTaxaSelecionada] = useState(0);
+  const taxasDisponiveis = [0, 5, 10, 15, 20, 25, 30];
+
+  //calculo de juros:  valor final = vEmprestado + (vEmprestado * taxa)
+
+  const calcularValorFinal = () => {
+    const valorEmprestado = parseFloat(valorEmprestadoInput.replace(',', '.')) || 0;
+    const calculoTotal = valorEmprestado + (valorEmprestado * (taxaSelecionada / 100));
+    return calculoTotal.toFixed(2).replace('.', ','); //deixa o valor no formato correto de dinheiro
+  };
+
+  return (
+    <SafeAreaView style={estilos.telaPrincipal}>
+      <Text style={estilos.tituloPrincipal}>Calculadora de juros</Text>
+
+
+      <View style={estilos.containerRotulo}>
+        <Text style={estilos.textoRotulo}>Valor emprestado :</Text>
+      </View>
+      <TextInput
+        style={estilos.campoDeTexto}
+        keyboardType="numeric"
+        value={valorEmprestadoInput}
+        onChangeText={setValorEmprestadoInput}
+        placeholder="Digite o valor aqui..."
+      />
+
+
+      <View style={estilos.containerRotulo}>
+        <Text style={estilos.textoRotulo}>Escolha a opção da taxa de juros:</Text>
+      </View>
+
+      <View style={estilos.faixaDeTaxas}>
+        {taxasDisponiveis.map((taxaAtual) => (
+          <TouchableOpacity
+            key={taxaAtual}
+            onPress={() => setTaxaSelecionada(taxaAtual)}
+          >
+            <Text style={[
+              estilos.textoTaxa,
+              taxaSelecionada === taxaAtual ? estilos.taxaAtiva : estilos.taxaInativa
+            ]}>
+              {taxaAtual}%
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+
+      <View style={estilos.areaResultado}>
+        <Text style={estilos.tituloResultado}>A pessoa deve te pagar</Text>
+        <View style={estilos.caixaValorFinal}>
+          <Text style={estilos.textoValorFinal}>R$ {calcularValorFinal()}</Text>
+        </View>
+      </View>
+
+    </SafeAreaView>
+  );
+}
+
+
+const estilos = StyleSheet.create({
+  telaPrincipal: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    padding: 20,
+    justifyContent: 'center',
+  },
+  tituloPrincipal: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 50,
+    color: '#000',
+  },
+  containerRotulo: {
+    backgroundColor: '#483e3eff',
+    alignSelf: 'flex-start',
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 8,
+    marginBottom: 10,
+    marginTop: 20,
+  },
+  textoRotulo: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  campoDeTexto: {
+    borderBottomWidth: 2,
+    borderBottomColor: '#000000ff',
+    fontSize: 18,
+    paddingVertical: 5,
+    marginBottom: 10,
+    color: '#000',
+  },
+  faixaDeTaxas: {
+    backgroundColor: '#352f2fff',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginTop: 5,
+  },
+  textoTaxa: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  taxaInativa: {
+    color: '#FFFFFF',
+  },
+  taxaAtiva: {
+    color: '#afa255ff',
+    textDecorationLine: 'underline',
+  },
+  areaResultado: {
+    alignItems: 'center',
+    marginTop: 60,
+  },
+  tituloResultado: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#000',
+    marginBottom: 15,
+  },
+  caixaValorFinal: {
+    backgroundColor: '#2f2a2aff',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+  },
+  textoValorFinal: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+});
