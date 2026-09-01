@@ -1,0 +1,363 @@
+import { useState } from 'react';
+import {
+  FlatList,
+  Keyboard,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+
+// tipo de cada item da lista
+type Item = {
+  id: string;
+  nome: string;
+  comprado: boolean;
+};
+
+// props do componente, só precisa do nome da pessoa mesmo
+type Props = {
+  nome: string;
+};
+
+export default function ListaCompras({ nome }: Props) {
+  const [itens, setItens] = useState<Item[]>([]); // lista de itens
+  const [pesquisa, setPesquisa] = useState(''); // texto digitado na busca
+  const [novoItem, setNovoItem] = useState(''); // texto do input de adicionar
+  const [mostrarAdicionar, setMostrarAdicionar] = useState(false); // mostra ou esconde a caixinha de add
+  const [menuAberto, setMenuAberto] = useState<string | null>(null); // guarda o id do item com o menuzinho aberto
+
+  // funcao que roda quando clica em "Adicionar"
+  function adicionarItem() {
+    // se o campo tiver vazio nao deixa adicionar
+    if (novoItem.trim() == '') {
+      return;
+    }
+
+    // monta o item novo
+    const item: Item = {
+      id: Date.now().toString(), // usei a data como id, meio gambiarra mas resolve
+      nome: novoItem,
+      comprado: false,
+    };
+
+    setItens([...itens, item]); // junta com os itens que ja tinham
+    setNovoItem(''); // limpa o campo depois de adicionar
+    setMostrarAdicionar(false); // fecha a caixinha de novo
+
+    Keyboard.dismiss(); // fecha o teclado do celular
+  }
+
+  // marca ou desmarca o item quando clica em cima dele
+  function marcarItem(id: string) {
+    const novaLista = itens.map((item) => {
+      if (item.id == id) {
+        return { ...item, comprado: !item.comprado }; // inverte o valor
+      }
+      return item;
+    });
+
+    setItens(novaLista);
+    setMenuAberto(null); // fecha o menu se tiver algum aberto
+  }
+
+  // remove o item da lista
+  function excluirItem(id: string) {
+    const novaLista = itens.filter((item) => item.id != id);
+    setItens(novaLista);
+    setMenuAberto(null);
+  }
+
+  // filtra os itens de acordo com o texto da pesquisa
+  const itensFiltrados = itens.filter((item) => {
+    return item.nome.toLowerCase().indexOf(pesquisa.toLowerCase()) !== -1;
+  });
+
+  // conta quantos itens ainda faltam comprar
+  let pendentes = 0;
+  for (let i = 0; i < itens.length; i++) {
+    if (!itens[i].comprado) {
+      pendentes = pendentes + 1;
+    }
+  }
+
+  return (
+    <View style={styles.container}>
+      {/* nome da pessoa la em cima */}
+      <Text style={styles.titulo}>Olá, {nome}!</Text>
+      <Text style={styles.subtitulo}>Minha lista de compras</Text>
+
+      {/* linha com o campo de busca e o botaozinho de + */}
+      <View style={styles.pesquisaLinha}>
+        <TextInput
+          style={styles.pesquisa}
+          placeholder="Pesquisar item..."
+          placeholderTextColor="#999"
+          value={pesquisa}
+          onChangeText={setPesquisa}
+        />
+
+        <TouchableOpacity
+          style={styles.botaoMais}
+          onPress={() => {
+            setMostrarAdicionar(!mostrarAdicionar);
+            setMenuAberto(null);
+          }}
+        >
+          <Text style={styles.mais}>+</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* essa caixa so aparece quando clica no + */}
+      {mostrarAdicionar && (
+        <View style={styles.caixaAdicionar}>
+          <TextInput
+            style={styles.inputAdicionar}
+            placeholder="Nome do produto"
+            placeholderTextColor="#999"
+            value={novoItem}
+            onChangeText={setNovoItem}
+            autoFocus
+            onSubmitEditing={adicionarItem}
+          />
+
+          <TouchableOpacity style={styles.botaoAdicionar} onPress={adicionarItem}>
+            <Text style={styles.textoBotao}>Adicionar</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* lista com os itens ja filtrados pela pesquisa */}
+      <FlatList
+        data={itensFiltrados}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.lista}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          // mensagem quando nao tem nada pra mostrar
+          <Text style={styles.listaVazia}>
+            {pesquisa ? 'Nenhum item encontrado.' : 'Sua lista está vazia.'}
+          </Text>
+        }
+        renderItem={({ item }) => (
+          <View style={styles.itemContainer}>
+            <TouchableOpacity style={styles.item} onPress={() => marcarItem(item.id)}>
+              {/* bolinha do check, fica preta quando marca o item */}
+              <View style={[styles.checkbox, item.comprado && styles.checkboxMarcado]}>
+                {item.comprado && <Text style={styles.check}>✓</Text>}
+              </View>
+
+              {/* risca o nome quando o item ja foi comprado */}
+              <Text style={[styles.nomeItem, item.comprado && styles.comprado]}>
+                {item.nome}
+              </Text>
+            </TouchableOpacity>
+
+            {/* botao dos 3 pontinhos, abre o menu de opcoes */}
+            <TouchableOpacity
+              style={styles.botaoMenu}
+              onPress={() => {
+                if (menuAberto == item.id) {
+                  setMenuAberto(null);
+                } else {
+                  setMenuAberto(item.id);
+                }
+              }}
+            >
+              <Text style={styles.pontos}>⋮</Text>
+            </TouchableOpacity>
+
+            {/* menu simples, por enquanto so tem excluir */}
+            {menuAberto == item.id && (
+              <View style={styles.menu}>
+                <TouchableOpacity onPress={() => excluirItem(item.id)} style={styles.excluir}>
+                  <Text style={styles.textoExcluir}>Excluir item</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        )}
+      />
+
+      {/* rodape mostrando quantos itens ainda faltam */}
+      <View style={styles.rodape}>
+        <Text style={styles.pendentes}>Itens pendentes: {pendentes}</Text>
+      </View>
+    </View>
+  );
+}
+
+// estilos de tudo
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    paddingHorizontal: 24,
+    paddingTop: 20,
+  },
+  titulo: {
+    fontSize: 27,
+    fontWeight: '700',
+    color: '#222',
+  },
+  subtitulo: {
+    fontSize: 15,
+    color: '#777',
+    marginTop: 4,
+    marginBottom: 20,
+  },
+  pesquisaLinha: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  pesquisa: {
+    flex: 1,
+    height: 50,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    fontSize: 16,
+    backgroundColor: '#fff',
+  },
+  botaoMais: {
+    width: 50,
+    height: 50,
+    borderRadius: 10,
+    backgroundColor: '#222', // fundo escuro do botao de +
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  mais: {
+    color: '#fff',
+    fontSize: 30,
+    fontWeight: '300',
+  },
+  caixaAdicionar: {
+    marginTop: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#e5e5e5',
+    borderRadius: 10,
+    backgroundColor: '#fafafa',
+  },
+  inputAdicionar: {
+    height: 48,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 9,
+    paddingHorizontal: 14,
+    fontSize: 16,
+    backgroundColor: '#fff',
+  },
+  botaoAdicionar: {
+    height: 48,
+    backgroundColor: '#222',
+    borderRadius: 9,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  textoBotao: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  lista: {
+    paddingTop: 18,
+    paddingBottom: 20,
+  },
+  itemContainer: {
+    position: 'relative',
+    marginBottom: 10,
+  },
+  item: {
+    minHeight: 60,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 14,
+    paddingRight: 50,
+    borderWidth: 1,
+    borderColor: '#eee',
+    borderRadius: 10,
+    backgroundColor: '#fff',
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderWidth: 2,
+    borderColor: '#ccc',
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  checkboxMarcado: {
+    backgroundColor: '#222', // fica preto quando o item ta marcado
+    borderColor: '#222',
+  },
+  check: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  nomeItem: {
+    flex: 1,
+    fontSize: 16,
+    color: '#222',
+  },
+  comprado: {
+    textDecorationLine: 'line-through', // risca o texto do item
+    color: '#999',
+  },
+  botaoMenu: {
+    position: 'absolute',
+    right: 8,
+    top: 0,
+    width: 40,
+    height: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pontos: {
+    fontSize: 27,
+    color: '#555',
+  },
+  menu: {
+    position: 'absolute',
+    right: 8,
+    top: 54,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    minWidth: 140,
+    elevation: 5,
+    zIndex: 10,
+  },
+  excluir: {
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+  },
+  textoExcluir: {
+    color: '#d32f2f', // vermelho pra avisar que e destrutivo
+    fontSize: 14,
+  },
+  listaVazia: {
+    textAlign: 'center',
+    marginTop: 40,
+    color: '#999',
+  },
+  rodape: {
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    paddingVertical: 18,
+  },
+  pendentes: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#444',
+  },
+});

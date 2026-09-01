@@ -1,0 +1,40 @@
+import React, { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import TelaLogin from './Componentes/TelaLogin';
+import ListaCompras from './Componentes/ListaCompras';
+
+export default function App() {
+  const [nome, setNome] = useState(''); // nome que a pessoa digitou no login
+  const [logado, setLogado] = useState(false); // controla se ja entrou ou nao
+
+  // roda quando clica no botao "Entrar"
+  function entrar() {
+    // so deixa entrar se tiver escrito algum nome
+    if (nome.trim() != '') {
+      setLogado(true);
+    }
+  }
+
+  // enquanto nao logou, mostra a tela de login
+  if (logado == false) {
+    return (
+      <View style={styles.container}>
+        <TelaLogin nome={nome} onMudarNome={setNome} onEntrar={entrar} />
+      </View>
+    );
+  }
+
+  // depois que logou, mostra a lista de compras
+  return (
+    <View style={styles.container}>
+      <ListaCompras nome={nome} />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+});
