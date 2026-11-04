@@ -1,0 +1,248 @@
+import { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  Image,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  View
+} from 'react-native';
+
+interface PokemonType {
+  type: {
+    name: string;
+  };
+}
+
+interface Pokemon {
+  id: number;
+  name: string;
+  types: PokemonType[];
+  sprites: {
+    front_default: string;
+    other: {
+      'official-artwork': {
+        front_default: string;
+      }
+    }
+  };
+}
+
+export default function App() {
+  const [pokemonList, setPokemonList] = useState<Pokemon[]>([]);
+  const [carregando, setCarregando] = useState(false);
+  const [offset, setOffset] = useState(0);
+  
+  
+  const buscarPokemon = async () => {
+    if (carregando) return;
+    
+    try {
+      setCarregando(true);
+      
+      // Busca a lista inicial (20 itens por padrão)
+      const resposta = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=20&offset=${offset}`);
+      const dados = await resposta.json();
+      
+      // A primeira requisição traz apenas nome e URL. 
+      
+      const promessasDetalhes = dados.results.map(async (item: { url: string }) => {
+        const resDetalhe = await fetch(item.url);
+        return await resDetalhe.json();
+      });
+      
+      const novosPokemons = await Promise.all(promessasDetalhes);
+      
+      // Adiciona os novos Pokémon à lista existente
+      setPokemonList((listaAnterior) => [...listaAnterior, ...novosPokemons]);
+      
+      // Atualiza o offset para a próxima requisição de mais 20
+      setOffset((offsetAnterior) => offsetAnterior + 20);
+      
+    } catch (erro) {
+      console.error("Erro ao buscar Pokémon:", erro);
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  // Executa a primeira busca ao montar o componente
+  useEffect(() => {
+    buscarPokemon();
+  }, []);
+
+  // Cores dinâmicas para as "badges" de tipos
+  const obterCorDoTipo = (tipo: string) => {
+    const cores: { [key: string]: string } = {
+      grass: '#48D0B0',
+      fire: '#FB6C6C',
+      water: '#76BDFE',
+      bug: '#A8B820',
+      normal: '#C6C6A7',
+      poison: '#9F5BBA',
+      electric: '#FFCE4B',
+      ground: '#E2BF65',
+      fairy: '#EE99AC',
+      fighting: '#C03028',
+      psychic: '#F85888',
+      rock: '#B8A038',
+      ghost: '#705898',
+      ice: '#98D8D8',
+      dragon: '#7038F8',
+    };
+    return cores[tipo.toLowerCase()] || '#777777';
+  };
+
+  // Componente visual de cada item da lista (Layout Horizontal Escuro)
+  const renderizarCartaoPokemon = ({ item }: { item: Pokemon }) => {
+    // Formata o ID para ter 3 dígitos (ex: #001)
+    const idFormatado = `#${item.id.toString().padStart(3, '0')}`;
+    const imagemUri = item.sprites.other['official-artwork'].front_default || item.sprites.front_default;
+
+    return (
+      <View style={styles.cartao}>
+        <View style={styles.fundoImagem}>
+          <Image 
+            source={{ uri: imagemUri }} 
+            style={styles.imagem} 
+            resizeMode="contain"
+          />
+        </View>
+        
+        <View style={styles.infoContainer}>
+          <Text style={styles.idTexto}>{idFormatado}</Text>
+          <Text style={styles.nomeTexto}>
+            {item.name.charAt(0).toUpperCase() + item.name.slice(1)}
+          </Text>
+          
+          <View style={styles.tiposContainer}>
+            {item.types.map((tipoInfo, index) => (
+              <View 
+                key={index} 
+                style={[
+                  styles.badgeTipo, 
+                  { backgroundColor: obterCorDoTipo(tipoInfo.type.name) }
+                ]}
+              >
+                <Text style={styles.textoTipo}>
+                  {tipoInfo.type.name.toUpperCase()}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      </View>
+    );
+  };
+
+  return (
+    <SafeAreaView style={styles.tela}>
+      <View style={styles.cabecalho}>
+        <Text style={styles.tituloApp}>Pokédex Moderna</Text>
+      </View>
+
+      <FlatList
+        data={pokemonList}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={renderizarCartaoPokemon}
+        contentContainerStyle={styles.listaContainer}
+        // Quando chegar a 10% do final da lista, chama a função de carregar mais
+        onEndReached={buscarPokemon}
+        onEndReachedThreshold={0.1}
+        // Mostra o loading no rodapé quando estiver buscando
+        ListFooterComponent={
+          carregando ? (
+            <View style={styles.rodapeLoading}>
+              <ActivityIndicator size="large" color="#FB6C6C" />
+            </View>
+          ) : null
+        }
+      />
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  tela: {
+    flex: 1,
+    backgroundColor: '#121212', 
+  },
+  cabecalho: {
+    padding: 20,
+    backgroundColor: '#1E1E1E',
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+  },
+  tituloApp: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  listaContainer: {
+    padding: 16,
+  },
+  cartao: {
+    flexDirection: 'row',
+    backgroundColor: '#1E1E1E',
+    borderRadius: 15,
+    marginBottom: 16,
+    padding: 12,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 5, // Para Android
+  },
+  fundoImagem: {
+    backgroundColor: '#2C2C2C',
+    borderRadius: 12,
+    padding: 10,
+    marginRight: 16,
+  },
+  imagem: {
+    width: 80,
+    height: 80,
+  },
+  infoContainer: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  idTexto: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#888888',
+    marginBottom: 4,
+  },
+  nomeTexto: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  tiposContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  badgeTipo: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 20,
+    marginRight: 8,
+    marginBottom: 4,
+  },
+  textoTipo: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  rodapeLoading: {
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  }
+});
